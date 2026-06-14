@@ -6,6 +6,7 @@
 
 - 生成短链：`POST /shorten` 提交长链接，返回短码
 - 访问跳转：`GET /:shortcode` 自动 301 跳转到原链接
+- 访问统计：`GET /stats/:shortcode` 查看短链被访问次数
 - 数据持久化：短码映射关系存储在 MySQL 中，服务重启不丢失
 
 ## 快速开始
@@ -47,6 +48,9 @@ curl -X POST http://localhost:8081/shorten \
 # 访问短链（用返回的 short_code）
 # 浏览器打开 http://localhost:8081/r
 `
+# 查看统计
+curl http://localhost:8081/stats/r
+
 
 ## 技术栈
 
