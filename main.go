@@ -3,9 +3,12 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
+
+var urlMap = make(map[string]string)
 
 func main() {
 	r := gin.Default()
@@ -16,7 +19,15 @@ func main() {
 		})
 	})
 
-	var idCounter uint64 = 0
+	r.GET("/:shortcode", func(c *gin.Context) {
+		shortCode := c.Param("shortcode")
+		longURL, exists := urlMap[shortCode]
+		if !exists {
+			c.JSON(http.StatusNotFound, gin.H{"error": "短码不存在"})
+			return
+		}
+		c.Redirect(http.StatusMovedPermanently, longURL)
+	})
 
 	r.POST("/shorten", func(c *gin.Context) {
 		var req struct {
@@ -27,8 +38,8 @@ func main() {
 			return
 		}
 
-		idCounter++
-		shortCode := fmt.Sprintf("%d", idCounter)
+		shortCode := fmt.Sprintf("%d", time.Now().UnixNano())
+		urlMap[shortCode] = req.URL
 
 		// TODO: 生成短码、存数据库、返回短码
 		c.JSON(http.StatusOK, gin.H{"short_code": shortCode})
