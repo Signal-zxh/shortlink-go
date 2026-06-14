@@ -13,12 +13,12 @@
 
 ### 前置条件
 
-- Go 1.21+
+- Go 1.26+
 - Docker（用于运行 MySQL）
 
 ### 启动 MySQL
 
-`bash
+```bash
 docker run -d \
   --name shortlink-mysql \
   -e MYSQL_ROOT_PASSWORD=123456 \
@@ -26,20 +26,20 @@ docker run -d \
   -p 3306:3306 \
   -v mysql-data:/var/lib/mysql \
   mysql:8.0
-`
+```
 
 ### 运行服务
 
-`bash
+```bash
 git clone https://github.com/Signal-zxh/shortlink-go.git
 cd shortlink-go
 go mod tidy
 go run main.go
-`
+```
 
 ### 测试
 
-`bash
+```bash
 # 生成短链
 curl -X POST http://localhost:8081/shorten \
   -H "Content-Type: application/json" \
@@ -47,17 +47,16 @@ curl -X POST http://localhost:8081/shorten \
 
 # 访问短链（用返回的 short_code）
 # 浏览器打开 http://localhost:8081/r
-`
+
 # 查看统计
 curl http://localhost:8081/stats/r
-
+```
 
 ## 技术栈
 
-- Go 1.21+
+- Go 1.26+
 - Gin
 - MySQL 8.0
-- base58
 
 ## License
 
