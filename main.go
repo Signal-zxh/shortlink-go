@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -32,10 +33,33 @@ func main() {
 			return
 		}
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "查询失败"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "查询失败：" + err.Error()})
 			return
 		}
+
+		result, err := db.Exec("UPDATE shortlinks SET click_count = click_count + 1 WHERE short_code = ?", shortCode)
+		if err != nil {
+			fmt.Println("UPDATE 错误:", err)
+		} else {
+			rows, _ := result.RowsAffected()
+			fmt.Println("影响行数:", rows)
+		}
 		c.Redirect(http.StatusMovedPermanently, longURL)
+	})
+
+	r.GET("/stats/:shortcode", func(c *gin.Context) {
+		shortCode := c.Param("shortcode")
+		var count int
+		err := db.QueryRow("SELECT click_count FROM shortlinks WHERE short_code = ?", shortCode).Scan(&count)
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusNotFound, gin.H{"error": "短码不存在"})
+			return
+		}
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "查询失败：" + err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"short_code": shortCode, "click_count": count})
 	})
 
 	r.POST("/shorten", func(c *gin.Context) {
@@ -52,7 +76,7 @@ func main() {
 
 		_, err := db.Exec("INSERT INTO shortlinks (short_code, long_url) VALUES (?, ?)", shortCode, req.URL)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "保存失败"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "保存失败：" + err.Error()})
 			return
 		}
 
@@ -74,7 +98,8 @@ func initDB() {
 	CREATE TABLE IF NOT EXISTS shortlinks (
 		id INT AUTO_INCREMENT PRIMARY KEY,
 		short_code VARCHAR(20) NOT NULL UNIQUE,
-		long_url TEXT NOT NULL
+		long_url TEXT NOT NULL,
+		click_count INT DEFAULT 0
 	);`
 
 	_, err = db.Exec(createTableSQL)
@@ -83,6 +108,6 @@ func initDB() {
 	}
 
 	var maxID uint64
-	db.QueryRow("SELECT COALESECE(MAX(id), 0) FROM shortlinks").Scan(&maxID)
+	db.QueryRow("SELECT COALESCE(MAX(id), 0) FROM shortlinks").Scan(&maxID)
 	idCounter = maxID
 }
