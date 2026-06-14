@@ -1,14 +1,15 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
-	"time"
+	"strconv"
 
+	"github.com/btcsuite/btcutil/base58"
 	"github.com/gin-gonic/gin"
 )
 
 var urlMap = make(map[string]string)
+var idCounter uint64 = 0
 
 func main() {
 	r := gin.Default()
@@ -38,7 +39,8 @@ func main() {
 			return
 		}
 
-		shortCode := fmt.Sprintf("%d", time.Now().UnixNano())
+		idCounter++
+		shortCode := base58.Encode([]byte(strconv.FormatUint(idCounter, 10)))
 		urlMap[shortCode] = req.URL
 
 		// TODO: 生成短码、存数据库、返回短码
